@@ -1,7 +1,7 @@
 export type UserRole = "reader" | "publisher";
 
 export interface Blog {
-    id : Number;
+    id : number;
     title : string;
     slug : string;
     description: string;
