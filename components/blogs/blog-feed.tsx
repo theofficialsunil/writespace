@@ -102,7 +102,15 @@ export function BlogFeed({ blogs }: BlogFeedProps) {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredBlogs.map((blog) => (
             <Link key={blog.id} href={`/blogs/${blog.slug}`}>
-              <Card className="h-full overflow-hidden transition hover:shadow-lg">
+              <Card key={blog.id} className="h-full overflow-hidden transition hover:shadow-lg">
+                <div className="aspect-video w-full overflow-hidden">
+                    <img
+                    src={blog.thumbnail}
+                    alt={blog.title}
+                    className="h-full w-full object-cover"
+                    />
+                </div>
+
                 <CardHeader>
                   <div className="mb-3 flex flex-wrap gap-2">
                     <Badge variant="outline">{blog.category}</Badge>
