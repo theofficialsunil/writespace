@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { signOut, useSession } from "next-auth/react";
 import { BookOpen, PenTool, UserPlus } from "lucide-react";
-import { useSession } from "next-auth/react";
+
+import { Button } from "@/components/ui/button";
 
 export function Navbar() {
   const { data: session } = useSession();
-
-  console.log(session);
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur">
@@ -25,12 +24,29 @@ export function Navbar() {
               Browse Blogs
             </Link>
 
-            <Button asChild>
-              <Link href="/auth">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Sign In
-              </Link>
-            </Button>
+            {session?.user ? (
+              <>
+                {session.user.role === "PUBLISHER" && (
+                  <Button asChild>
+                    <Link href="/blogs/new">
+                      <PenTool className="mr-2 h-4 w-4" />
+                      Write
+                    </Link>
+                  </Button>
+                )}
+
+                <Button variant="outline" onClick={() => signOut()}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Button asChild>
+                <Link href="/auth">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Sign In
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>
