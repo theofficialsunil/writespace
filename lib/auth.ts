@@ -1,45 +1,75 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+
+import { db } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  session: {
+    strategy: "jwt",
+  },
+
   providers: [
     Credentials({
-      name: "Credentials",
       credentials: {
         email: {},
         password: {},
       },
+
       async authorize(credentials) {
-        // TEMP: mock login (will connect DB later)
-        if (
-          credentials?.email === "test@gmail.com" &&
-          credentials?.password === "123456"
-        ) {
-          return {
-            id: "1",
-            name: "Test User",
-            email: "test@gmail.com",
-            role: "publisher",
-          };
+        const email = credentials?.email as string | undefined;
+        const password = credentials?.password as string | undefined;
+
+        if (!email || !password) {
+          return null;
         }
 
-        return null;
+        const user = await db.user.findUnique({
+          where: { email },
+        });
+
+        if (!user) {
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: user.role,
+        };
       },
     }),
   ],
+
   callbacks: {
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
-        session.user.role = token.role;
-      }
-      return session;
-    },
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
       }
+
       return token;
     },
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
+
+      return session;
+    },
+  },
+
+  pages: {
+    signIn: "/auth",
   },
 });
