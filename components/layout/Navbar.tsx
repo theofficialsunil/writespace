@@ -1,8 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BookOpen, PenTool, UserPlus } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export function Navbar() {
+  const { data: session } = useSession();
+
+  console.log(session);
+
   return (
     <nav className="border-b bg-background/95 backdrop-blur">
       <div className="container mx-auto px-4">
