@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  READER
+  PUBLISHER
+  ADMIN
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  image     String?
+  role      Role     @default(READER)
+
+  blogs     Blog[]
+  comments  Comment[]
+  likes     Like[]
+  bookmarks Bookmark[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Blog {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  description String
+  content     String
+  thumbnail   String?
+  status      BlogStatus @default(DRAFT)
+
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  comments    Comment[]
+  likes       Like[]
+  bookmarks   Bookmark[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  publishedAt DateTime?
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  id        String   @id @default(cuid())
+
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blogId, userId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blogId, userId])
+}
