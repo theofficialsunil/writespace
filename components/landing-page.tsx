@@ -146,45 +146,49 @@ export function LandingPage({ featuredBlogs }: LandingPageProps) {
 
                     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                         {featuredBlogs.slice(0, 6).map((blog) => (
-                            <Card
-                                key={blog.id}
-                                className="overflow-hidden hover:shadow-lg transition-shadow"
-                            >
-                                <div className="relative aspect-video w-full">
-                                    <Image
-                                        src={blog.thumbnail}
-                                        alt={blog.title}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-
-                                <CardHeader>
-                                    <div className="flex flex-wrap gap-2 mb-2">
-                                        {blog.tags.slice(0, 2).map((tag) => (
-                                            <Badge
-                                                key={tag}
-                                                variant="secondary"
-                                                className="text-xs"
-                                            >
-                                                {tag}
-                                            </Badge>
-                                        ))}
+                            <Link href={`/blogs/${blog.slug}`}>
+                                <Card
+                                    key={blog.id}
+                                    className="overflow-hidden hover:shadow-lg transition-shadow"
+                                >
+                                    <div className="relative aspect-video w-full">
+                                        <Image
+                                            src={blog.thumbnail}
+                                            alt={blog.title}
+                                            fill
+                                            className="object-cover"
+                                        />
                                     </div>
 
-                                    <CardTitle className="line-clamp-2">
-                                        {blog.title}
-                                    </CardTitle>
-                                    <CardDescription className="line-clamp-3">
-                                        {blog.description}
-                                    </CardDescription>
+                                    <CardHeader>
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {blog.tags
+                                                .slice(0, 2)
+                                                .map((tag) => (
+                                                    <Badge
+                                                        key={tag}
+                                                        variant="secondary"
+                                                        className="text-xs"
+                                                    >
+                                                        {tag}
+                                                    </Badge>
+                                                ))}
+                                        </div>
 
-                                    <div className="flex items-center justify-between text-sm text-muted-foreground mt-4">
-                                        <span>By {blog.author}</span>
-                                        <span>{blog.publishDate}</span>
-                                    </div>
-                                </CardHeader>
-                            </Card>
+                                        <CardTitle className="line-clamp-2">
+                                            {blog.title}
+                                        </CardTitle>
+                                        <CardDescription className="line-clamp-3">
+                                            {blog.description}
+                                        </CardDescription>
+
+                                        <div className="flex items-center justify-between text-sm text-muted-foreground mt-4">
+                                            <span>By {blog.author}</span>
+                                            <span>{blog.publishDate}</span>
+                                        </div>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
                         ))}
                     </div>
 
