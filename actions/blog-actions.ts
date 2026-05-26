@@ -112,3 +112,70 @@ export async function deleteBlogAction(blogId: string) {
     },
   });
 }
+
+export async function updateBlogAction(
+  blogId: string,
+  _prevState: CreateBlogState,
+  formData: FormData
+): Promise<CreateBlogState> {
+  const session = await auth();
+
+  if (!session?.user) {
+    return {
+      errors: {
+        _form: ["You must be logged in."],
+      },
+    };
+  }
+
+  const blog = await db.blog.findUnique({
+    where: { id: blogId },
+  });
+
+  if (!blog) {
+    return {
+      errors: {
+        _form: ["Blog not found."],
+      },
+    };
+  }
+
+  if (blog.authorId !== session.user.id) {
+    return {
+      errors: {
+        _form: ["You are not allowed to edit this blog."],
+      },
+    };
+  }
+
+  const parsed = createBlogSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description"),
+    content: formData.get("content"),
+    thumbnail: formData.get("thumbnail"),
+    status: formData.get("status"),
+  });
+
+  if (!parsed.success) {
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  await db.blog.update({
+    where: { id: blogId },
+    data: {
+      title: parsed.data.title,
+      description: parsed.data.description,
+      content: parsed.data.content,
+      thumbnail: parsed.data.thumbnail ?? null,
+      status: parsed.data.status,
+      publishedAt:
+        parsed.data.status === "PUBLISHED"
+          ? blog.publishedAt ?? new Date()
+          : null,
+    },
+  });
+
+  redirect("/dashboard");
+}

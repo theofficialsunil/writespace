@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { CreateBlogForm } from "@/components/blogs/create-blog-form";
+import { BlogForm } from "@/components/blogs/blog-form";
 import { auth } from "@/lib/auth";
 
 export default async function NewBlogPage() {
@@ -16,7 +16,7 @@ export default async function NewBlogPage() {
         Write and publish your article.
       </p>
 
-      <CreateBlogForm />
+      <BlogForm mode="create" />
     </main>
   );
 }
