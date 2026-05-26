@@ -1,10 +1,11 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { redirect } from "next/navigation";
 import { z } from "zod";
+import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
+
 const signupSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
@@ -25,9 +26,7 @@ export async function signupAction(formData: FormData) {
   }
 
   const existingUser = await db.user.findUnique({
-    where: {
-      email: parsed.data.email,
-    },
+    where: { email: parsed.data.email },
   });
 
   if (existingUser) {
