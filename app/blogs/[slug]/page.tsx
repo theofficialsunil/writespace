@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { BlogView } from "@/components/blogs/blog-view";
-import { mockBlogs } from "@/lib/mock-data";
+import { db } from "@/lib/db";
 
 interface BlogPageProps {
   params: Promise<{
@@ -12,11 +12,53 @@ interface BlogPageProps {
 export default async function BlogPage({ params }: BlogPageProps) {
   const { slug } = await params;
 
-  const blog = mockBlogs.find((blog) => blog.slug === slug);
+  try {
+    const blog = await db.blog.findUnique({
+      where: {
+        slug,
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+        likes: true,
+        comments: true,
+      },
+    });
 
-  if (!blog) {
-    notFound();
+    if (!blog || blog.status !== "PUBLISHED") {
+      notFound();
+    }
+
+    const formattedBlog = {
+      id: blog.id,
+      title: blog.title,
+      slug: blog.slug,
+      description: blog.description,
+      content: blog.content,
+      author: blog.author.name,
+      publishDate: blog.publishedAt
+        ? blog.publishedAt.toLocaleDateString()
+        : blog.createdAt.toLocaleDateString(),
+      thumbnail: blog.thumbnail ?? "",
+      tags: [],
+      category: "General",
+      likes: blog.likes.length,
+      readTime: `${Math.ceil(blog.content.length / 800)} min read`,
+      status: blog.status.toLowerCase() as "published" | "draft",
+    };
+
+    return <BlogView blog={formattedBlog} />;
+  } catch {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold">Blog unavailable</h1>
+        <p className="mt-2 text-muted-foreground">
+          Database connection failed. Check Neon connection.
+        </p>
+      </main>
+    );
   }
-
-  return <BlogView blog={blog} />;
 }
