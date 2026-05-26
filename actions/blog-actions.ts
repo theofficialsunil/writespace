@@ -85,3 +85,30 @@ export async function createBlogAction(
 
   redirect("/dashboard");
 }
+
+export async function deleteBlogAction(blogId: string) {
+  const session = await auth();
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const blog = await db.blog.findUnique({
+    where: {
+      id: blogId,
+    },
+  });
+
+  if (!blog) {
+    throw new Error("Blog not found");
+  }
+
+  if (blog.authorId !== session.user.id) {
+    throw new Error("You cannot delete this blog");
+  }
+
+  await db.blog.delete({
+    where: {
+      id: blogId,
+    },
+  });
+}

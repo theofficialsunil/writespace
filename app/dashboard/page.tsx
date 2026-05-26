@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DeleteBlogButton } from "@/components/blogs/delete-blog-button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -154,6 +155,8 @@ export default async function DashboardPage() {
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/blogs/${blog.slug}/edit`}>Edit</Link>
                     </Button>
+
+                    <DeleteBlogButton blogId={blog.id} />
                   </div>
                 </div>
               </CardHeader>
