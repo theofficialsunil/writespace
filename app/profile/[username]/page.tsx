@@ -55,6 +55,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     likes: blog.likes.length,
     readTime: `${Math.ceil(blog.content.length / 800)} min read`,
     status: blog.status.toLowerCase() as "published" | "draft",
+    authorUsername: user.username ?? username,
   }));
 
   return (

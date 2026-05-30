@@ -21,6 +21,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
         author: {
           select: {
             name: true,
+            username: true,
           },
         },
         likes: true,
@@ -39,6 +40,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
       description: blog.description,
       content: blog.content,
       author: blog.author.name,
+      authorUsername: blog.author.username ?? "",
       publishDate: blog.publishedAt
         ? blog.publishedAt.toLocaleDateString()
         : blog.createdAt.toLocaleDateString(),

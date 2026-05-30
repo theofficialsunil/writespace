@@ -7,6 +7,7 @@ export interface Blog {
   description: string;
   content: string;
   author: string;
+  authorUsername: string;
   publishDate: string;
   thumbnail: string;
   tags: string[];

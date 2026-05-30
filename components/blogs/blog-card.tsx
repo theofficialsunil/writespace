@@ -18,19 +18,20 @@ interface BlogCardProps {
 
 export function BlogCard({ blog }: BlogCardProps) {
   return (
-    <Link href={`/blogs/${blog.slug}`}>
-      <Card className="group h-full overflow-hidden transition-all duration-200 hover:shadow-lg">
+    <Card className="group h-full overflow-hidden rounded-xl transition-all duration-200 hover:shadow-lg">
+      <Link href={`/blogs/${blog.slug}`} className="block">
         {blog.thumbnail && (
-        <div className="relative aspect-ratio: 16/9; w-full overflow-hidden bg-muted">
+          <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
             <Image
-            src={blog.thumbnail}
-            alt={blog.title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+              src={blog.thumbnail}
+              alt={blog.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
             />
-        </div>
+          </div>
         )}
+
         <CardHeader className="p-6">
           <div className="mb-3 flex flex-wrap gap-2">
             <Badge variant="outline" className="text-xs">
@@ -52,21 +53,30 @@ export function BlogCard({ blog }: BlogCardProps) {
             {blog.description}
           </CardDescription>
         </CardHeader>
+      </Link>
 
-        <CardContent className="px-6 pb-6 pt-0">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
+      <CardContent className="px-6 pb-6 pt-0">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <User className="h-3 w-3" />
+            {blog.authorUsername ? (
+              <Link
+                href={`/profile/${blog.authorUsername}`}
+                className="hover:underline"
+              >
+                {blog.author}
+              </Link>
+            ) : (
               <span>{blog.author}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span>{blog.publishDate}</span>
-            </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>{blog.publishDate}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

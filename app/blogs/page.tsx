@@ -7,7 +7,7 @@ export default async function BlogsPage() {
       where: { status: "PUBLISHED" },
       orderBy: { publishedAt: "desc" },
       include: {
-        author: { select: { name: true } },
+        author: { select: { name: true, username: true } },
         likes: true,
         comments: true,
       },
@@ -20,6 +20,7 @@ export default async function BlogsPage() {
       description: blog.description,
       content: blog.content,
       author: blog.author.name,
+      authorUsername: blog.author.username ?? "",
       publishDate: blog.publishedAt
         ? blog.publishedAt.toLocaleDateString()
         : blog.createdAt.toLocaleDateString(),
