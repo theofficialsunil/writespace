@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { BookOpen, PenTool, UserPlus } from "lucide-react";
+import { BookOpen, LayoutDashboard, PenTool, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -27,12 +27,21 @@ export function Navbar() {
             {session?.user ? (
               <>
                 {session.user.role === "PUBLISHER" && (
-                  <Button asChild>
-                    <Link href="/blogs/new">
-                      <PenTool className="mr-2 h-4 w-4" />
-                      Write
-                    </Link>
-                  </Button>
+                  <>
+                    <Button variant="ghost" asChild>
+                      <Link href="/dashboard">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </Button>
+
+                    <Button asChild>
+                      <Link href="/blogs/new">
+                        <PenTool className="mr-2 h-4 w-4" />
+                        Write
+                      </Link>
+                    </Button>
+                  </>
                 )}
 
                 <Button variant="outline" onClick={() => signOut()}>
