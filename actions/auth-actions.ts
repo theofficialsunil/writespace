@@ -1,15 +1,15 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { z } from "zod";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { db } from "@/lib/db";
 
 const signupSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["READER", "PUBLISHER"]),
 });
 
@@ -26,7 +26,9 @@ export async function signupAction(formData: FormData) {
   }
 
   const existingUser = await db.user.findUnique({
-    where: { email: parsed.data.email },
+    where: {
+      email: parsed.data.email,
+    },
   });
 
   if (existingUser) {

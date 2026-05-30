@@ -33,11 +33,11 @@ export function AuthForm() {
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = "/onboarding/username";
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-background to-muted/30 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome to WriteSpace</CardTitle>

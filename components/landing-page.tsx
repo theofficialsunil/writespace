@@ -147,7 +147,7 @@ export function LandingPage({ featuredBlogs }: LandingPageProps) {
 
                     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                         {featuredBlogs.slice(0, 6).map((blog) => (
-                            <BlogCard blog={blog} />
+                            <BlogCard key={blog.id} blog={blog} />
                         ))}
                     </div>
 
