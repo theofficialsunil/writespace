@@ -21,7 +21,7 @@ export function BlogCard({ blog }: BlogCardProps) {
     <Link href={`/blogs/${blog.slug}`}>
       <Card className="group h-full overflow-hidden transition-all duration-200 hover:shadow-lg">
         {blog.thumbnail && (
-        <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+        <div className="relative aspect-ratio: 16/9; w-full overflow-hidden bg-muted">
             <Image
             src={blog.thumbnail}
             alt={blog.title}

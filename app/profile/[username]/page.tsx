@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Calendar, UserRound } from "lucide-react";
 
 import { BlogCard } from "@/components/blogs/blog-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,7 +16,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { username } = await params;
 
   const user = await db.user.findUnique({
-    where: { username },
+    where: {
+      username,
+    },
     include: {
       blogs: {
         where: {
@@ -63,22 +65,41 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <AvatarFallback className="text-2xl">
               {user.name
                 .split(" ")
-                .map((name) => name[0])
+                .map((part) => part[0])
                 .join("")
                 .toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
-          <div>
-            <h1 className="text-3xl font-bold">{user.name}</h1>
-            <p className="text-muted-foreground">@{user.username}</p>
-            <p className="mt-2 text-muted-foreground">
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-3xl font-bold">{user.name}</h1>
+              <span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
+                {user.role}
+              </span>
+            </div>
+
+            <p className="mt-1 text-muted-foreground">@{user.username}</p>
+
+            <p className="mt-3 max-w-2xl text-muted-foreground">
               {user.bio ?? "Writer at WriteSpace"}
             </p>
 
-            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <BookOpen className="h-4 w-4" />
-              <span>{blogs.length} published blogs</span>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <BookOpen className="h-4 w-4" />
+                {blogs.length} published blogs
+              </span>
+
+              <span className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                Joined {user.createdAt.toLocaleDateString()}
+              </span>
+
+              <span className="flex items-center gap-1">
+                <UserRound className="h-4 w-4" />
+                @{user.username}
+              </span>
             </div>
           </div>
         </CardContent>
@@ -87,7 +108,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       <h2 className="mb-6 text-2xl font-bold">Published Blogs</h2>
 
       {blogs.length === 0 ? (
-        <p className="text-muted-foreground">No published blogs yet.</p>
+        <Card>
+          <CardContent className="p-6 text-muted-foreground">
+            No published blogs yet.
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {blogs.map((blog) => (
