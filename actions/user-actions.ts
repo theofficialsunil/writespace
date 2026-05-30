@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { auth } from "@/lib/auth";
@@ -8,6 +7,8 @@ import { db } from "@/lib/db";
 
 export type UsernameState = {
   error?: string;
+  success?: boolean;
+  username?: string;
 };
 
 const usernameSchema = z.object({
@@ -29,7 +30,9 @@ export async function setUsernameAction(
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/auth");
+    return {
+      error: "You must be logged in.",
+    };
   }
 
   const parsed = usernameSchema.safeParse({
@@ -54,17 +57,17 @@ export async function setUsernameAction(
     };
   }
 
-  const updatedUser = await db.user.update({
+  await db.user.update({
     where: {
       id: session.user.id,
     },
     data: {
       username: parsed.data.username,
     },
-    select: {
-      role: true,
-    },
   });
 
-  redirect("/auth?usernameSet=true");
+  return {
+    success: true,
+    username: parsed.data.username,
+  };
 }

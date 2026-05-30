@@ -11,9 +11,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   providers: [
     Credentials({
+      name: "Credentials",
+
       credentials: {
-        email: {},
-        password: {},
+        email: {
+          label: "Email",
+          type: "email",
+        },
+        password: {
+          label: "Password",
+          type: "password",
+        },
       },
 
       async authorize(credentials) {
@@ -25,10 +33,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await db.user.findUnique({
-          where: { email },
+          where: {
+            email,
+          },
         });
 
-        if (!user) {
+        if (!user || !user.password) {
           return null;
         }
 
@@ -51,11 +61,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.username = user.username;
+      }
+
+      if (trigger === "update" && session?.user?.username) {
+        token.username = session.user.username;
       }
 
       return token;
@@ -65,7 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
-        session.user.username = token.username as string | undefined;
+        session.user.username = token.username as string | null;
       }
 
       return session;

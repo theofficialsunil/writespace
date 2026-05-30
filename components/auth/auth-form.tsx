@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { BookOpen, Eye, EyeOff, Lock, Mail, PenTool, User } from "lucide-react";
 
 import { signupAction } from "@/actions/auth-actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +21,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function AuthForm() {
+  const searchParams = useSearchParams();
+  const usernameSet = searchParams.get("usernameSet") === "true";
+
   const [showPassword, setShowPassword] = useState(false);
   const [signinError, setSigninError] = useState("");
 
@@ -22,6 +32,7 @@ export function AuthForm() {
 
     const email = String(formData.get("email"));
     const password = String(formData.get("password"));
+
     const result = await signIn("credentials", {
       email,
       password,
@@ -33,15 +44,21 @@ export function AuthForm() {
       return;
     }
 
-    window.location.href = "/onboarding/username";
+    window.location.href = "/";
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background to-muted/30 flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-background to-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome to WriteSpace</CardTitle>
           <CardDescription>Sign in or create your account</CardDescription>
+
+          {usernameSet && (
+            <p className="mt-3 rounded-md bg-green-50 p-2 text-sm text-green-700">
+              Username set successfully. Please sign in again.
+            </p>
+          )}
         </CardHeader>
 
         <CardContent>
@@ -57,7 +74,12 @@ export function AuthForm() {
                   <Label>Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input name="email" type="email" className="pl-10" required />
+                    <Input
+                      name="email"
+                      type="email"
+                      className="pl-10"
+                      required
+                    />
                   </div>
                 </div>
 
@@ -76,7 +98,11 @@ export function AuthForm() {
                       onClick={() => setShowPassword((value) => !value)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -105,7 +131,12 @@ export function AuthForm() {
                   <Label>Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input name="email" type="email" className="pl-10" required />
+                    <Input
+                      name="email"
+                      type="email"
+                      className="pl-10"
+                      required
+                    />
                   </div>
                 </div>
 
@@ -113,7 +144,12 @@ export function AuthForm() {
                   <Label>Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input name="password" type="password" className="pl-10" required />
+                    <Input
+                      name="password"
+                      type="password"
+                      className="pl-10"
+                      required
+                    />
                   </div>
                 </div>
 
@@ -122,7 +158,10 @@ export function AuthForm() {
                   <RadioGroup defaultValue="READER" name="role">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="READER" id="reader" />
-                      <Label htmlFor="reader" className="flex cursor-pointer items-center gap-2">
+                      <Label
+                        htmlFor="reader"
+                        className="flex cursor-pointer items-center gap-2"
+                      >
                         <BookOpen className="h-4 w-4" />
                         Reader
                       </Label>
@@ -130,7 +169,10 @@ export function AuthForm() {
 
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="PUBLISHER" id="publisher" />
-                      <Label htmlFor="publisher" className="flex cursor-pointer items-center gap-2">
+                      <Label
+                        htmlFor="publisher"
+                        className="flex cursor-pointer items-center gap-2"
+                      >
                         <PenTool className="h-4 w-4" />
                         Publisher
                       </Label>
