@@ -61,3 +61,32 @@ export async function createCommentAction(
     success: true,
   };
 }
+
+export async function deleteCommentAction(commentId: string, slug: string) {
+  const session = await auth();
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const comment = await db.comment.findUnique({
+    where: {
+      id: commentId,
+    },
+  });
+
+  if (!comment) {
+    throw new Error("Comment not found");
+  }
+
+  if (comment.authorId !== session.user.id) {
+    throw new Error("You cannot delete this comment");
+  }
+
+  await db.comment.delete({
+    where: {
+      id: commentId,
+    },
+  });
+
+  revalidatePath(`/blogs/${slug}`);
+}

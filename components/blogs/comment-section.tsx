@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 
 import { CommentForm } from "@/components/blogs/comment-form";
+import { DeleteCommentButton } from "@/components/blogs/delete-comment-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ interface Comment {
   id: string;
   content: string;
   createdAt: Date;
+  authorId: string;
   author: {
     name: string;
     username: string | null;
@@ -21,6 +23,7 @@ interface CommentSectionProps {
   slug: string;
   comments: Comment[];
   isLoggedIn: boolean;
+  currentUserId?: string;
 }
 
 export function CommentSection({
@@ -28,6 +31,7 @@ export function CommentSection({
   slug,
   comments,
   isLoggedIn,
+  currentUserId,
 }: CommentSectionProps) {
   return (
     <section className="mt-16 space-y-8">
@@ -104,6 +108,13 @@ export function CommentSection({
                           {comment.createdAt.toLocaleDateString()}
                         </span>
                       </div>
+
+                      {currentUserId === comment.authorId && (
+                        <DeleteCommentButton
+                          commentId={comment.id}
+                          slug={slug}
+                        />
+                      )}
                     </div>
 
                     <p className="leading-relaxed">{comment.content}</p>

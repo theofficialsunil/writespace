@@ -77,6 +77,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
             slug={blog.slug}
             comments={blog.comments}
             isLoggedIn={Boolean(session?.user)}
+            currentUserId={session?.user?.id}
           />
         </div>
       </>
