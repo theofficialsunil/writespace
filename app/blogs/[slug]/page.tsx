@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { BlogView } from "@/components/blogs/blog-view";
 import { CommentSection } from "@/components/blogs/comment-section";
+import { LikeButton } from "@/components/blogs/like-button";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -48,6 +49,10 @@ export default async function BlogPage({ params }: BlogPageProps) {
       notFound();
     }
 
+    const isLiked = blog.likes.some(
+      (like) => like.userId === session?.user?.id
+    );
+
     const formattedBlog = {
       id: blog.id,
       title: blog.title,
@@ -69,7 +74,18 @@ export default async function BlogPage({ params }: BlogPageProps) {
 
     return (
       <>
-        <BlogView blog={formattedBlog} />
+        <BlogView
+          blog={formattedBlog}
+          actions={
+            <LikeButton
+              blogId={blog.id}
+              slug={blog.slug}
+              likesCount={blog.likes.length}
+              isLiked={isLiked}
+              isLoggedIn={Boolean(session?.user)}
+            />
+          }
+        />
 
         <div className="container mx-auto max-w-4xl px-4">
           <CommentSection
