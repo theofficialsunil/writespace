@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { BlogView } from "@/components/blogs/blog-view";
+import { CommentSection } from "@/components/blogs/comment-section";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 interface BlogPageProps {
@@ -11,6 +13,7 @@ interface BlogPageProps {
 
 export default async function BlogPage({ params }: BlogPageProps) {
   const { slug } = await params;
+  const session = await auth();
 
   try {
     const blog = await db.blog.findUnique({
@@ -25,7 +28,19 @@ export default async function BlogPage({ params }: BlogPageProps) {
           },
         },
         likes: true,
-        comments: true,
+        comments: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            author: {
+              select: {
+                name: true,
+                username: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -52,13 +67,26 @@ export default async function BlogPage({ params }: BlogPageProps) {
       status: blog.status.toLowerCase() as "published" | "draft",
     };
 
-    return <BlogView blog={formattedBlog} />;
+    return (
+      <>
+        <BlogView blog={formattedBlog} />
+
+        <div className="container mx-auto max-w-4xl px-4">
+          <CommentSection
+            blogId={blog.id}
+            slug={blog.slug}
+            comments={blog.comments}
+            isLoggedIn={Boolean(session?.user)}
+          />
+        </div>
+      </>
+    );
   } catch {
     return (
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold">Blog unavailable</h1>
         <p className="mt-2 text-muted-foreground">
-          Database connection failed. Check Neon connection.
+          Database connection failed. Check database connection.
         </p>
       </main>
     );
