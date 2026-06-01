@@ -1,10 +1,14 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
+
+export type SignupState = {
+  error?: string;
+  success?: string;
+};
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -13,7 +17,10 @@ const signupSchema = z.object({
   role: z.enum(["READER", "PUBLISHER"]),
 });
 
-export async function signupAction(formData: FormData) {
+export async function signupAction(
+  _prevState: SignupState,
+  formData: FormData
+): Promise<SignupState> {
   const parsed = signupSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -22,7 +29,14 @@ export async function signupAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Invalid signup data");
+    return {
+      error:
+        parsed.error.flatten().fieldErrors.name?.[0] ||
+        parsed.error.flatten().fieldErrors.email?.[0] ||
+        parsed.error.flatten().fieldErrors.password?.[0] ||
+        parsed.error.flatten().fieldErrors.role?.[0] ||
+        "Invalid signup data",
+    };
   }
 
   const existingUser = await db.user.findUnique({
@@ -32,7 +46,9 @@ export async function signupAction(formData: FormData) {
   });
 
   if (existingUser) {
-    throw new Error("User already exists");
+    return {
+      error: "User already exists. Please sign in instead.",
+    };
   }
 
   const hashedPassword = await bcrypt.hash(parsed.data.password, 10);
@@ -46,5 +62,7 @@ export async function signupAction(formData: FormData) {
     },
   });
 
-  redirect("/auth");
+  return {
+    success: "Account created successfully. Please sign in.",
+  };
 }

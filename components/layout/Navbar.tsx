@@ -6,18 +6,28 @@ import {
   BookMarked,
   BookOpen,
   LayoutDashboard,
+  Menu,
   PenTool,
   User,
   UserPlus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useState } from "react";
 
 export function Navbar() {
   const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur">
+    <nav className="sticky top-0 z-50 border-b border-white/20 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -25,8 +35,8 @@ export function Navbar() {
             <span className="text-xl font-semibold">WriteSpace</span>
           </Link>
 
-          <div className="flex items-center gap-3">
-            <Link href="/blogs" className="hidden sm:flex items-center gap-1">
+          <div className="hidden items-center gap-3 md:flex">
+            <Link href="/blogs" className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
               Browse Blogs
             </Link>
@@ -79,6 +89,92 @@ export function Navbar() {
                 </Link>
               </Button>
             )}
+          </div>
+
+          <div className="md:hidden">
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle>WriteSpace</SheetTitle>
+                </SheetHeader>
+
+                <div className="mt-6 flex flex-col gap-3">
+                  <Button variant="ghost" asChild className="justify-start">
+                    <Link href="/blogs" onClick={() => setOpen(false)}>
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Browse Blogs
+                    </Link>
+                  </Button>
+
+                  {session?.user ? (
+                    <>
+                      <Button variant="ghost" asChild className="justify-start">
+                        <Link href="/bookmarks" onClick={() => setOpen(false)}>
+                          <BookMarked className="mr-2 h-4 w-4" />
+                          Bookmarks
+                        </Link>
+                      </Button>
+
+                      {session.user.username && (
+                        <Button
+                          variant="ghost"
+                          asChild
+                          className="justify-start"
+                        >
+                          <Link href={`/profile/${session.user.username}`} onClick={() => setOpen(false)}>
+                            <User className="mr-2 h-4 w-4" />
+                            Profile
+                          </Link>
+                        </Button>
+                      )}
+
+                      {session.user.role === "PUBLISHER" && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            asChild
+                            className="justify-start"
+                          >
+                            <Link href="/dashboard" onClick={() => setOpen(false)}>
+                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                              Dashboard
+                            </Link>
+                          </Button>
+
+                          <Button asChild className="justify-start">
+                            <Link href="/blogs/new" onClick={() => setOpen(false)}>
+                              <PenTool className="mr-2 h-4 w-4" />
+                              Write
+                            </Link>
+                          </Button>
+                        </>
+                      )}
+
+                      <Button
+                        variant="outline"
+                        onClick={() => signOut()}
+                        className="justify-start"
+                      >
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <Button asChild className="justify-start">
+                      <Link href="/auth" onClick={() => setOpen(false)}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Sign In
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

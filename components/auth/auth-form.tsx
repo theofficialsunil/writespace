@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { BookOpen, Eye, EyeOff, Lock, Mail, PenTool, User } from "lucide-react";
 
-import { signupAction } from "@/actions/auth-actions";
+import { signupAction, type SignupState } from "@/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,12 +20,19 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const initialSignupState: SignupState = {};
+
 export function AuthForm() {
   const searchParams = useSearchParams();
   const usernameSet = searchParams.get("usernameSet") === "true";
 
   const [showPassword, setShowPassword] = useState(false);
   const [signinError, setSigninError] = useState("");
+
+  const [signupState, signupFormAction, isSignupPending] = useActionState(
+    signupAction,
+    initialSignupState
+  );
 
   async function handleSignin(formData: FormData) {
     setSigninError("");
@@ -48,7 +55,7 @@ export function AuthForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-background to-muted/30 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome to WriteSpace</CardTitle>
@@ -118,7 +125,7 @@ export function AuthForm() {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form action={signupAction} className="space-y-4">
+              <form action={signupFormAction} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Full Name</Label>
                   <div className="relative">
@@ -187,8 +194,24 @@ export function AuthForm() {
                   </Label>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Create Account
+                {signupState.error && (
+                  <p className="text-sm text-destructive">
+                    {signupState.error}
+                  </p>
+                )}
+
+                {signupState.success && (
+                  <p className="rounded-md bg-green-50 p-2 text-sm text-green-700">
+                    {signupState.success}
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSignupPending}
+                >
+                  {isSignupPending ? "Creating..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>
