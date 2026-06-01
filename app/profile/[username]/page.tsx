@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookOpen, Calendar, UserRound } from "lucide-react";
+import { BookOpen, Calendar, UserRound, Users } from "lucide-react";
 
 import { BlogCard } from "@/components/blogs/blog-card";
+import { FollowButton } from "@/components/profile/follow-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +37,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           comments: true,
         },
       },
+      followers: true,
+      following: true,
     },
   });
 
@@ -44,6 +47,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   }
 
   const isOwnProfile = session?.user?.id === user.id;
+
+  const isFollowing = Boolean(
+    session?.user &&
+      user.followers.some((follow) => follow.followerId === session.user.id)
+  );
 
   const blogs = user.blogs.map((blog) => ({
     id: blog.id,
@@ -100,23 +108,37 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 </span>
 
                 <span className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  Joined {user.createdAt.toLocaleDateString()}
+                  <Users className="h-4 w-4" />
+                  {user.followers.length} followers
                 </span>
 
                 <span className="flex items-center gap-1">
                   <UserRound className="h-4 w-4" />
-                  @{user.username}
+                  {user.following.length} following
+                </span>
+
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  Joined {user.createdAt.toLocaleDateString()}
                 </span>
               </div>
             </div>
           </div>
 
-          {isOwnProfile && (
-            <Button variant="outline" asChild>
-              <Link href="/settings/profile">Edit Profile</Link>
-            </Button>
-          )}
+          <div>
+            {isOwnProfile ? (
+              <Button variant="outline" asChild>
+                <Link href="/settings/profile">Edit Profile</Link>
+              </Button>
+            ) : (
+              <FollowButton
+                followingId={user.id}
+                username={user.username ?? ""}
+                isFollowing={isFollowing}
+                isLoggedIn={Boolean(session?.user)}
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
 

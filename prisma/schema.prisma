@@ -24,19 +24,22 @@ enum BlogStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  username  String  @unique
-  email     String   @unique
-  password  String
-  image     String?
-  bio       String?
-  role      Role     @default(READER)
+  id       String  @id @default(cuid())
+  name     String
+  username String?  @unique
+  email    String  @unique
+  password String
+  image    String?
+  bio      String?
+  role     Role    @default(READER)
 
   blogs     Blog[]
   comments  Comment[]
   likes     Like[]
   bookmarks Bookmark[]
+
+  followers Follow[] @relation("UserFollowers")
+  following Follow[] @relation("UserFollowing")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -51,39 +54,35 @@ model Blog {
   thumbnail   String?
   status      BlogStatus @default(DRAFT)
 
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  comments    Comment[]
-  likes       Like[]
-  bookmarks   Bookmark[]
+  comments  Comment[]
+  likes     Like[]
+  bookmarks Bookmark[]
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-
-  blogId    String
-  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
-
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  content String
+  blogId String
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }
 
 model Like {
-  id        String   @id @default(cuid())
-
-  blogId    String
-  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
-
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
+  blogId String
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -91,15 +90,22 @@ model Like {
 }
 
 model Bookmark {
-  id        String   @id @default(cuid())
-
-  blogId    String
-  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
-
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id String @id @default(cuid())
+  blogId String
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([blogId, userId])
+}
+
+model Follow {
+  id String @id @default(cuid())
+  followerId String
+  follower   User   @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User   @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([followerId, followingId])
 }
