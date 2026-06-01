@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { BlogView } from "@/components/blogs/blog-view";
+import { BookmarkButton } from "@/components/blogs/bookmark-button";
 import { CommentSection } from "@/components/blogs/comment-section";
 import { LikeButton } from "@/components/blogs/like-button";
 import { auth } from "@/lib/auth";
@@ -29,6 +30,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
           },
         },
         likes: true,
+        bookmarks: true,
         comments: {
           orderBy: {
             createdAt: "desc",
@@ -51,6 +53,10 @@ export default async function BlogPage({ params }: BlogPageProps) {
 
     const isLiked = blog.likes.some(
       (like) => like.userId === session?.user?.id
+    );
+
+    const isBookmarked = blog.bookmarks.some(
+      (bookmark) => bookmark.userId === session?.user?.id
     );
 
     const formattedBlog = {
@@ -77,13 +83,22 @@ export default async function BlogPage({ params }: BlogPageProps) {
         <BlogView
           blog={formattedBlog}
           actions={
-            <LikeButton
-              blogId={blog.id}
-              slug={blog.slug}
-              likesCount={blog.likes.length}
-              isLiked={isLiked}
-              isLoggedIn={Boolean(session?.user)}
-            />
+            <>
+              <LikeButton
+                blogId={blog.id}
+                slug={blog.slug}
+                likesCount={blog.likes.length}
+                isLiked={isLiked}
+                isLoggedIn={Boolean(session?.user)}
+              />
+
+              <BookmarkButton
+                blogId={blog.id}
+                slug={blog.slug}
+                isBookmarked={isBookmarked}
+                isLoggedIn={Boolean(session?.user)}
+              />
+            </>
           }
         />
 

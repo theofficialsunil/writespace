@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { BookOpen, LayoutDashboard, PenTool, UserPlus } from "lucide-react";
+import {
+  BookMarked,
+  BookOpen,
+  LayoutDashboard,
+  PenTool,
+  User,
+  UserPlus,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +25,7 @@ export function Navbar() {
             <span className="text-xl font-semibold">WriteSpace</span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link href="/blogs" className="hidden sm:flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
               Browse Blogs
@@ -26,6 +33,22 @@ export function Navbar() {
 
             {session?.user ? (
               <>
+                <Button variant="ghost" asChild>
+                  <Link href="/bookmarks">
+                    <BookMarked className="mr-2 h-4 w-4" />
+                    Bookmarks
+                  </Link>
+                </Button>
+
+                {session.user.username && (
+                  <Button variant="ghost" asChild>
+                    <Link href={`/profile/${session.user.username}`}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </Button>
+                )}
+
                 {session.user.role === "PUBLISHER" && (
                   <>
                     <Button variant="ghost" asChild>
