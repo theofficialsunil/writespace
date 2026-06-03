@@ -1,16 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { ChangeEvent, useActionState, useState } from "react";
-import { AlertCircle, Eye, ImageIcon, Save, Send, Tag, Upload } from "lucide-react";
+import { ChangeEvent, useActionState, useMemo, useState } from "react";
+import { AlertCircle, ImageIcon, Save, Send, Tag, Upload } from "lucide-react";
 
 import {
   createBlogAction,
   updateBlogAction,
   type CreateBlogState,
 } from "@/actions/blog-actions";
+import { BlogPreviewDialog } from "@/components/blogs/blog-preview-dialog";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
-import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
 interface BlogFormProps {
   mode: "create" | "edit";
@@ -41,13 +42,31 @@ interface BlogFormProps {
 
 const initialState: CreateBlogState = {};
 
+function parsePreviewTags(tagsInput: string) {
+  return Array.from(
+    new Set(
+      tagsInput
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean)
+        .slice(0, 5)
+    )
+  );
+}
+
 export function BlogForm({ mode, blog }: BlogFormProps) {
+  const [title, setTitle] = useState(blog?.title ?? "");
+  const [description, setDescription] = useState(blog?.description ?? "");
+  const [content, setContent] = useState(blog?.content ?? "");
   const [thumbnailUrl, setThumbnailUrl] = useState(blog?.thumbnail ?? "");
+  const [tagsInput, setTagsInput] = useState(
+    blog?.tags?.map((blogTag) => blogTag.tag.name).join(", ") ?? ""
+  );
+
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
-  const defaultTags =
-    blog?.tags?.map((blogTag) => blogTag.tag.name).join(", ") ?? "";
+  const previewTags = useMemo(() => parsePreviewTags(tagsInput), [tagsInput]);
 
   const action =
     mode === "edit" && blog
@@ -86,7 +105,7 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
 
   return (
     <form action={formAction} className="mt-8">
-      <input type="hidden" name="thumbnail" value={thumbnailUrl} />
+      <input type="hidden" name="thumbnail" value={thumbnailUrl} readOnly />
 
       {state.errors?._form && (
         <div className="mb-6 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
@@ -101,13 +120,16 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
             <CardHeader>
               <CardTitle>Blog Title</CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-2">
               <Input
                 name="title"
                 placeholder="Enter an engaging title for your blog post..."
-                defaultValue={blog?.title}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
                 className="text-lg"
               />
+
               {state.errors?.title && (
                 <p className="text-sm text-destructive">
                   {state.errors.title[0]}
@@ -120,16 +142,19 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
             <CardHeader>
               <CardTitle>Short Description</CardTitle>
               <CardDescription>
-                A brief summary that appears in blog previews
+                A brief summary that appears in blog previews.
               </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-2">
               <Textarea
                 name="description"
                 placeholder="Write a compelling description..."
-                defaultValue={blog?.description}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
                 className="min-h-24"
               />
+
               {state.errors?.description && (
                 <p className="text-sm text-destructive">
                   {state.errors.description[0]}
@@ -146,8 +171,14 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 blocks.
               </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-2">
-              <TiptapEditor name="content" initialContent={blog?.content} />
+              <TiptapEditor
+                name="content"
+                initialContent={blog?.content}
+                onContentChange={setContent}
+              />
+
               {state.errors?.content && (
                 <p className="text-sm text-destructive">
                   {state.errors.content[0]}
@@ -228,16 +259,15 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 <Tag className="h-5 w-5" />
                 Tags
               </CardTitle>
-              <CardDescription>
-                Add up to 5 comma-separated tags.
-              </CardDescription>
+              <CardDescription>Add up to 5 comma-separated tags.</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-2">
               <Input
                 name="tags"
                 placeholder="nextjs, prisma, upsc"
-                defaultValue={defaultTags}
+                value={tagsInput}
+                onChange={(event) => setTagsInput(event.target.value)}
               />
 
               <p className="text-xs text-muted-foreground">
@@ -258,15 +288,13 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
             </CardHeader>
 
             <CardContent className="space-y-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                Preview Later
-              </Button>
+              <BlogPreviewDialog
+                title={title}
+                description={description}
+                content={content}
+                thumbnail={thumbnailUrl}
+                tags={previewTags}
+              />
 
               <Button
                 type="submit"

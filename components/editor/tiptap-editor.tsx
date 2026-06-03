@@ -20,9 +20,10 @@ const lowlight = createLowlight(common);
 interface TiptapEditorProps {
   name: string;
   initialContent?: string;
+  onContentChange?: (content: string) => void;
 }
 
-export function TiptapEditor({ name, initialContent = "" }: TiptapEditorProps) {
+export function TiptapEditor({ name,initialContent = "",onContentChange,}: TiptapEditorProps) {
   const [html, setHtml] = useState(initialContent);
 
   const editor = useEditor({
@@ -68,7 +69,9 @@ export function TiptapEditor({ name, initialContent = "" }: TiptapEditorProps) {
       },
     },
     onUpdate({ editor }) {
-      setHtml(editor.getHTML());
+      const content = editor.getHTML();
+      setHtml(content);
+      onContentChange?.(content);
     },
   });
 
@@ -88,7 +91,7 @@ export function TiptapEditor({ name, initialContent = "" }: TiptapEditorProps) {
 
       <EditorContent editor={editor} />
 
-      <input type="hidden" name={name} value={html} />
+      <input type="hidden" name={name} value={html}  readOnly/>
     </div>
   );
 }
