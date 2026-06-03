@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, Calendar, UserRound, Users } from "lucide-react";
@@ -53,6 +54,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       user.followers.some((follow) => follow.followerId === session.user.id)
   );
 
+  const initials = user.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
   const blogs = user.blogs.map((blog) => ({
     id: blog.id,
     title: blog.title,
@@ -78,13 +85,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         <CardContent className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             <Avatar className="h-20 w-20">
-              <AvatarFallback className="text-2xl">
-                {user.name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")
-                  .toUpperCase()}
-              </AvatarFallback>
+              {user.image ? (
+                <div className="relative h-full w-full">
+                  <Image
+                    src={user.image}
+                    alt={user.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+              )}
             </Avatar>
 
             <div>
