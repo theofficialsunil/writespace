@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { BlogView } from "@/components/blogs/blog-view";
@@ -11,6 +12,47 @@ interface BlogPageProps {
   params: Promise<{
     slug: string;
   }>;
+}
+
+export async function generateMetadata({
+  params,
+}: BlogPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  const blog = await db.blog.findUnique({
+    where: { slug },
+    include: {
+      author: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!blog) {
+    return {
+      title: "Blog not found | WriteSpace",
+    };
+  }
+
+  return {
+    title: `${blog.title} | WriteSpace`,
+    description: blog.description,
+    openGraph: {
+      title: blog.title,
+      description: blog.description,
+      type: "article",
+      images: blog.thumbnail ? [blog.thumbnail] : [],
+      authors: [blog.author.name],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: blog.title,
+      description: blog.description,
+      images: blog.thumbnail ? [blog.thumbnail] : [],
+    },
+  };
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {

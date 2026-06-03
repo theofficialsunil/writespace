@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, Calendar, UserRound, Users } from "lucide-react";
+import type { Metadata } from "next";
 
 import { BlogCard } from "@/components/blogs/blog-card";
 import { FollowButton } from "@/components/profile/follow-button";
@@ -17,6 +18,42 @@ interface ProfilePageProps {
   }>;
 }
 
+export async function generateMetadata({
+  params,
+}: ProfilePageProps): Promise<Metadata> {
+  const { username } = await params;
+
+  const user = await db.user.findUnique({
+    where: { username },
+    select: {
+      name: true,
+      bio: true,
+      image: true,
+    },
+  });
+
+  if (!user) {
+    return {
+      title: "Profile not found | WriteSpace",
+    };
+  }
+
+  return {
+    title: `${user.name} (@${username}) | WriteSpace`,
+    description: user.bio ?? `Read blogs by ${user.name} on WriteSpace.`,
+    openGraph: {
+      title: `${user.name} on WriteSpace`,
+      description: user.bio ?? `Read blogs by ${user.name}.`,
+      images: user.image ? [user.image] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${user.name} on WriteSpace`,
+      description: user.bio ?? `Read blogs by ${user.name}.`,
+      images: user.image ? [user.image] : [],
+    },
+  };
+}
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { username } = await params;
   const session = await auth();
