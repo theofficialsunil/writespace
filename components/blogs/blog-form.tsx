@@ -1,9 +1,8 @@
-// @/components/blogs/blog-form.tsx
 "use client";
 
 import Image from "next/image";
 import { ChangeEvent, useActionState, useState } from "react";
-import { AlertCircle, Eye, ImageIcon, Save, Send, Upload } from "lucide-react";
+import { AlertCircle, Eye, ImageIcon, Save, Send, Tag, Upload } from "lucide-react";
 
 import {
   createBlogAction,
@@ -32,6 +31,11 @@ interface BlogFormProps {
     content: string;
     thumbnail: string | null;
     status: "DRAFT" | "PUBLISHED";
+    tags?: {
+      tag: {
+        name: string;
+      };
+    }[];
   };
 }
 
@@ -42,6 +46,9 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
+  const defaultTags =
+    blog?.tags?.map((blogTag) => blogTag.tag.name).join(", ") ?? "";
+
   const action =
     mode === "edit" && blog
       ? updateBlogAction.bind(null, blog.id)
@@ -51,13 +58,16 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
 
   async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+
     if (!file) return;
 
     setUploadError("");
+
     if (!file.type.startsWith("image/")) {
       setUploadError("Please upload a valid image file.");
       return;
     }
+
     if (file.size > 2 * 1024 * 1024) {
       setUploadError("Image must be smaller than 2MB.");
       return;
@@ -99,7 +109,9 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 className="text-lg"
               />
               {state.errors?.title && (
-                <p className="text-sm text-destructive">{state.errors.title[0]}</p>
+                <p className="text-sm text-destructive">
+                  {state.errors.title[0]}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -119,7 +131,9 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 className="min-h-24"
               />
               {state.errors?.description && (
-                <p className="text-sm text-destructive">{state.errors.description[0]}</p>
+                <p className="text-sm text-destructive">
+                  {state.errors.description[0]}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -128,13 +142,16 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
             <CardHeader>
               <CardTitle>Blog Content</CardTitle>
               <CardDescription>
-                Use rich formatting for headings, lists, quotes, and code blocks.
+                Use rich formatting for headings, lists, quotes, and code
+                blocks.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <TiptapEditor name="content" initialContent={blog?.content} />
               {state.errors?.content && (
-                <p className="text-sm text-destructive">{state.errors.content[0]}</p>
+                <p className="text-sm text-destructive">
+                  {state.errors.content[0]}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -159,6 +176,7 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                     src={thumbnailUrl}
                     alt="Thumbnail preview"
                     fill
+                    sizes="(max-width: 1024px) 100vw, 33vw"
                     className="object-cover"
                   />
                 </div>
@@ -175,12 +193,15 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                   onChange={handleImageUpload}
                   disabled={isUploading}
                 />
+
                 <p className="text-xs text-muted-foreground">
                   JPG, PNG or WEBP. Max size 2MB.
                 </p>
               </div>
 
-              {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
+              {uploadError && (
+                <p className="text-sm text-destructive">{uploadError}</p>
+              )}
 
               {thumbnailUrl && (
                 <Button
@@ -194,7 +215,39 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
               )}
 
               {state.errors?.thumbnail && (
-                <p className="text-sm text-destructive">{state.errors.thumbnail[0]}</p>
+                <p className="text-sm text-destructive">
+                  {state.errors.thumbnail[0]}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                Tags
+              </CardTitle>
+              <CardDescription>
+                Add up to 5 comma-separated tags.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-2">
+              <Input
+                name="tags"
+                placeholder="nextjs, prisma, upsc"
+                defaultValue={defaultTags}
+              />
+
+              <p className="text-xs text-muted-foreground">
+                Example: react, nextjs, education
+              </p>
+
+              {state.errors?.tags && (
+                <p className="text-sm text-destructive">
+                  {state.errors.tags[0]}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -205,7 +258,12 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
             </CardHeader>
 
             <CardContent className="space-y-3">
-              <Button type="button" variant="outline" className="w-full" disabled>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 Preview Later
               </Button>
@@ -237,14 +295,15 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 {isUploading
                   ? "Uploading..."
                   : isPending
-                  ? "Publishing..."
-                  : "Publish"}
+                    ? "Publishing..."
+                    : "Publish"}
               </Button>
 
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  Complete title, description, content, and optionally upload a thumbnail.
+                  Complete title, description, content, tags, and optionally
+                  upload a thumbnail.
                 </p>
               </div>
             </CardContent>

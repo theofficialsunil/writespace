@@ -39,6 +39,18 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
               mode: "insensitive" as const,
             },
           },
+          {
+            tags: {
+              some: {
+                tag: {
+                  name: {
+                    contains: query,
+                    mode: "insensitive" as const,
+                  },
+                },
+              },
+            },
+          },
         ]
       : undefined,
   };
@@ -67,6 +79,11 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
         },
         likes: true,
         comments: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     }),
 
@@ -89,7 +106,7 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
       ? blog.publishedAt.toLocaleDateString()
       : blog.createdAt.toLocaleDateString(),
     thumbnail: blog.thumbnail ?? "",
-    tags: [],
+    tags: blog.tags.map((blogTag) => blogTag.tag.name),
     category: "General",
     likes: blog.likes.length,
     readTime: `${Math.ceil(blog.content.length / 800)} min read`,

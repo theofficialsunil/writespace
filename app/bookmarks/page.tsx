@@ -35,13 +35,14 @@ export default async function BookmarksPage() {
     include: {
       blog: {
         include: {
-          author: {
-            select: {
-              name: true,
-              username: true,
+          author: true,
+          likes: true,
+          comments: true,
+          tags: {
+            include: {
+              tag: true,
             },
           },
-          likes: true,
         },
       },
     },
@@ -61,7 +62,7 @@ export default async function BookmarksPage() {
         ? bookmark.blog.publishedAt.toLocaleDateString()
         : bookmark.blog.createdAt.toLocaleDateString(),
       thumbnail: bookmark.blog.thumbnail ?? "",
-      tags: [],
+      tags: bookmark.blog.tags.map((blogTag) => blogTag.tag.name),
       category: "General",
       likes: bookmark.blog.likes.length,
       readTime: `${Math.ceil(bookmark.blog.content.length / 800)} min read`,

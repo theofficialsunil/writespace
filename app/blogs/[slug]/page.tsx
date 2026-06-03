@@ -27,6 +27,11 @@ export async function generateMetadata({
           name: true,
         },
       },
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
     },
   });
 
@@ -36,15 +41,19 @@ export async function generateMetadata({
     };
   }
 
+  const tagNames = blog.tags.map((blogTag) => blogTag.tag.name);
+
   return {
     title: `${blog.title} | WriteSpace`,
     description: blog.description,
+    keywords: tagNames,
     openGraph: {
       title: blog.title,
       description: blog.description,
       type: "article",
       images: blog.thumbnail ? [blog.thumbnail] : [],
       authors: [blog.author.name],
+      tags: tagNames,
     },
     twitter: {
       card: "summary_large_image",
@@ -73,6 +82,11 @@ export default async function BlogPage({ params }: BlogPageProps) {
         },
         likes: true,
         bookmarks: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         comments: {
           orderBy: {
             createdAt: "desc",
@@ -113,7 +127,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
         ? blog.publishedAt.toLocaleDateString()
         : blog.createdAt.toLocaleDateString(),
       thumbnail: blog.thumbnail ?? "",
-      tags: [],
+      tags: blog.tags.map((blogTag) => blogTag.tag.name),
       category: "General",
       likes: blog.likes.length,
       readTime: `${Math.ceil(blog.content.length / 800)} min read`,

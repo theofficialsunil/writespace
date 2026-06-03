@@ -15,23 +15,36 @@ export default async function EditBlogPage({ params }: EditBlogPageProps) {
 
   const session = await auth();
 
-  if (!session?.user) redirect("/auth");
+  if (!session?.user) {
+    redirect("/auth");
+  }
 
   const blog = await db.blog.findUnique({
-    where: { slug },
+    where: {
+      slug,
+    },
+    include: {
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+    },
   });
 
-  if (!blog) notFound();
+  if (!blog) {
+    notFound();
+  }
 
   if (blog.authorId !== session.user.id) {
     redirect("/dashboard");
   }
 
   return (
-    <main className="container mx-auto max-w-3xl px-4 py-8">
+    <main className="container mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-3xl font-bold">Edit Blog</h1>
       <p className="mt-2 text-muted-foreground">
-        Update your blog content and publishing status.
+        Update your blog content, tags, thumbnail, and publishing status.
       </p>
 
       <BlogForm mode="edit" blog={blog} />

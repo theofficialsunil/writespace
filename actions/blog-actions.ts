@@ -1,4 +1,3 @@
-// @/actions/blog-actions.tsx
 "use server";
 
 import { redirect } from "next/navigation";
@@ -14,6 +13,7 @@ export type CreateBlogState = {
     description?: string[];
     content?: string[];
     thumbnail?: string[];
+    tags?: string[];
     status?: string[];
     _form?: string[];
   };
@@ -22,21 +22,56 @@ export type CreateBlogState = {
 const createBlogSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  content: z.string().refine(
-    (html) => {
-      const text = html.replace(/<[^>]*>/g, "").trim();
-      return text.length >= 20;
-    },
-    { message: "Content must be at least 20 characters" }
-  ),
+  content: z.string().min(20, "Content must be at least 20 characters"),
   thumbnail: z
     .string()
     .trim()
     .optional()
     .transform((value) => value || undefined)
     .pipe(z.string().url("Invalid thumbnail URL").optional()),
+  tags: z.string().optional(),
   status: z.enum(["DRAFT", "PUBLISHED"]),
 });
+
+function parseTags(tagsInput?: string) {
+  return Array.from(
+    new Set(
+      (tagsInput ?? "")
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean)
+        .slice(0, 5)
+    )
+  );
+}
+
+async function connectTagsToBlog(blogId: string, tags: string[]) {
+  if (tags.length === 0) return;
+
+  await Promise.all(
+    tags.map(async (tagName) => {
+      const tag = await db.tag.upsert({
+        where: { name: tagName },
+        update: {},
+        create: { name: tagName },
+      });
+
+      await db.blogTag.upsert({
+        where: {
+          blogId_tagId: {
+            blogId,
+            tagId: tag.id,
+          },
+        },
+        update: {},
+        create: {
+          blogId,
+          tagId: tag.id,
+        },
+      });
+    })
+  );
+}
 
 export async function createBlogAction(
   _prevState: CreateBlogState,
@@ -47,6 +82,7 @@ export async function createBlogAction(
   if (!session?.user) {
     return { errors: { _form: ["You must be logged in to create a blog."] } };
   }
+
   if (session.user.role !== "PUBLISHER") {
     return { errors: { _form: ["Only publishers can create blogs."] } };
   }
@@ -56,18 +92,22 @@ export async function createBlogAction(
     description: formData.get("description"),
     content: formData.get("content"),
     thumbnail: formData.get("thumbnail"),
+    tags: formData.get("tags"),
     status: formData.get("status"),
   });
 
   if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors };
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+    };
   }
 
   const baseSlug = generateSlug(parsed.data.title);
   const slug = `${baseSlug}-${Date.now()}`;
+  const tags = parseTags(parsed.data.tags);
 
   try {
-    await db.blog.create({
+    const blog = await db.blog.create({
       data: {
         title: parsed.data.title,
         slug,
@@ -79,9 +119,14 @@ export async function createBlogAction(
         authorId: session.user.id,
       },
     });
-  } catch (error) {
-    console.error("CREATE BLOG DATABASE ERROR:", error);
-    return { errors: { _form: ["Database error. Please try again."] } };
+
+    await connectTagsToBlog(blog.id, tags);
+  } catch {
+    return {
+      errors: {
+        _form: ["Database error. Please try again."],
+      },
+    };
   }
 
   redirect("/dashboard");
@@ -89,13 +134,30 @@ export async function createBlogAction(
 
 export async function deleteBlogAction(blogId: string) {
   const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
 
-  const blog = await db.blog.findUnique({ where: { id: blogId } });
-  if (!blog) throw new Error("Blog not found");
-  if (blog.authorId !== session.user.id) throw new Error("You cannot delete this blog");
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
 
-  await db.blog.delete({ where: { id: blogId } });
+  const blog = await db.blog.findUnique({
+    where: {
+      id: blogId,
+    },
+  });
+
+  if (!blog) {
+    throw new Error("Blog not found");
+  }
+
+  if (blog.authorId !== session.user.id) {
+    throw new Error("You cannot delete this blog");
+  }
+
+  await db.blog.delete({
+    where: {
+      id: blogId,
+    },
+  });
 }
 
 export async function updateBlogAction(
@@ -104,10 +166,19 @@ export async function updateBlogAction(
   formData: FormData
 ): Promise<CreateBlogState> {
   const session = await auth();
-  if (!session?.user) return { errors: { _form: ["You must be logged in."] } };
 
-  const blog = await db.blog.findUnique({ where: { id: blogId } });
-  if (!blog) return { errors: { _form: ["Blog not found."] } };
+  if (!session?.user) {
+    return { errors: { _form: ["You must be logged in."] } };
+  }
+
+  const blog = await db.blog.findUnique({
+    where: { id: blogId },
+  });
+
+  if (!blog) {
+    return { errors: { _form: ["Blog not found."] } };
+  }
+
   if (blog.authorId !== session.user.id) {
     return { errors: { _form: ["You are not allowed to edit this blog."] } };
   }
@@ -117,12 +188,17 @@ export async function updateBlogAction(
     description: formData.get("description"),
     content: formData.get("content"),
     thumbnail: formData.get("thumbnail"),
+    tags: formData.get("tags"),
     status: formData.get("status"),
   });
 
   if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors };
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+    };
   }
+
+  const tags = parseTags(parsed.data.tags);
 
   try {
     await db.blog.update({
@@ -139,9 +215,18 @@ export async function updateBlogAction(
             : null,
       },
     });
-  } catch (error) {
-    console.error("UPDATE BLOG DATABASE ERROR:", error);
-    return { errors: { _form: ["Database error. Please try again."] } };
+
+    await db.blogTag.deleteMany({
+      where: { blogId },
+    });
+
+    await connectTagsToBlog(blogId, tags);
+  } catch {
+    return {
+      errors: {
+        _form: ["Database error. Please try again."],
+      },
+    };
   }
 
   redirect("/dashboard");

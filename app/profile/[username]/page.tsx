@@ -73,6 +73,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         include: {
           likes: true,
           comments: true,
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
         },
       },
       followers: true,
@@ -109,7 +114,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       ? blog.publishedAt.toLocaleDateString()
       : blog.createdAt.toLocaleDateString(),
     thumbnail: blog.thumbnail ?? "",
-    tags: [],
+    tags: blog.tags.map((blogTag) => blogTag.tag.name),
     category: "General",
     likes: blog.likes.length,
     readTime: `${Math.ceil(blog.content.length / 800)} min read`,
@@ -128,6 +133,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     src={user.image}
                     alt={user.name}
                     fill
+                    sizes="80px"
                     className="object-cover"
                   />
                 </div>
