@@ -60,6 +60,7 @@ model Blog {
   comments  Comment[]
   likes     Like[]
   bookmarks Bookmark[]
+  tags BlogTag[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -98,6 +99,24 @@ model Bookmark {
   createdAt DateTime @default(now())
 
   @@unique([blogId, userId])
+}
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+
+  blogs BlogTag[]
+
+  createdAt DateTime @default(now())
+}
+
+model BlogTag {
+  blogId String
+  tagId  String
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([blogId, tagId])
 }
 
 model Follow {
