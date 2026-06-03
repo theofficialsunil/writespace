@@ -1,3 +1,4 @@
+// @/components/blogs/blog-view.tsx
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Share2, User } from "lucide-react";
@@ -5,6 +6,7 @@ import { ArrowLeft, Calendar, Clock, Share2, User } from "lucide-react";
 import { Blog } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BlogContent } from "@/components/blogs/blog-content";
 
 interface BlogViewProps {
   blog: Blog;
@@ -32,15 +34,16 @@ export function BlogView({ blog, actions }: BlogViewProps) {
               src={blog.thumbnail}
               alt={blog.title}
               fill
+              sizes="(max-width: 1024px) 100vw, 896px"
               className="object-cover"
+              priority
             />
           </div>
         )}
 
         <div className="mb-6 flex flex-wrap gap-2">
           <Badge variant="outline">{blog.category}</Badge>
-
-          {blog.tags.map((tag) => (
+          {blog.tags?.map((tag) => (
             <Badge key={tag} variant="secondary">
               {tag}
             </Badge>
@@ -84,7 +87,6 @@ export function BlogView({ blog, actions }: BlogViewProps) {
 
           <div className="flex items-center gap-2">
             {actions}
-
             <Button variant="outline" size="sm">
               <Share2 className="mr-2 h-4 w-4" />
               Share
@@ -92,9 +94,7 @@ export function BlogView({ blog, actions }: BlogViewProps) {
           </div>
         </div>
 
-        <div className="mt-8 whitespace-pre-line text-lg leading-8">
-          {blog.content}
-        </div>
+        <BlogContent content={blog.content} />
       </article>
     </main>
   );

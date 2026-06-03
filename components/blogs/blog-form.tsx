@@ -1,3 +1,4 @@
+// @/components/blogs/blog-form.tsx
 "use client";
 
 import Image from "next/image";
@@ -9,6 +10,7 @@ import {
   updateBlogAction,
   type CreateBlogState,
 } from "@/actions/blog-actions";
+import { TiptapEditor } from "@/components/editor/tiptap-editor";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,16 +51,13 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
 
   async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-
     if (!file) return;
 
     setUploadError("");
-
     if (!file.type.startsWith("image/")) {
       setUploadError("Please upload a valid image file.");
       return;
     }
-
     if (file.size > 2 * 1024 * 1024) {
       setUploadError("Image must be smaller than 2MB.");
       return;
@@ -100,9 +99,7 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 className="text-lg"
               />
               {state.errors?.title && (
-                <p className="text-sm text-destructive">
-                  {state.errors.title[0]}
-                </p>
+                <p className="text-sm text-destructive">{state.errors.title[0]}</p>
               )}
             </CardContent>
           </Card>
@@ -122,9 +119,7 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 className="min-h-24"
               />
               {state.errors?.description && (
-                <p className="text-sm text-destructive">
-                  {state.errors.description[0]}
-                </p>
+                <p className="text-sm text-destructive">{state.errors.description[0]}</p>
               )}
             </CardContent>
           </Card>
@@ -133,20 +128,13 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
             <CardHeader>
               <CardTitle>Blog Content</CardTitle>
               <CardDescription>
-                Write your blog post content here
+                Use rich formatting for headings, lists, quotes, and code blocks.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Textarea
-                name="content"
-                placeholder="Start writing your blog post..."
-                defaultValue={blog?.content}
-                className="min-h-96 resize-none"
-              />
+              <TiptapEditor name="content" initialContent={blog?.content} />
               {state.errors?.content && (
-                <p className="text-sm text-destructive">
-                  {state.errors.content[0]}
-                </p>
+                <p className="text-sm text-destructive">{state.errors.content[0]}</p>
               )}
             </CardContent>
           </Card>
@@ -187,15 +175,12 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                   onChange={handleImageUpload}
                   disabled={isUploading}
                 />
-
                 <p className="text-xs text-muted-foreground">
                   JPG, PNG or WEBP. Max size 2MB.
                 </p>
               </div>
 
-              {uploadError && (
-                <p className="text-sm text-destructive">{uploadError}</p>
-              )}
+              {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
 
               {thumbnailUrl && (
                 <Button
@@ -209,9 +194,7 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
               )}
 
               {state.errors?.thumbnail && (
-                <p className="text-sm text-destructive">
-                  {state.errors.thumbnail[0]}
-                </p>
+                <p className="text-sm text-destructive">{state.errors.thumbnail[0]}</p>
               )}
             </CardContent>
           </Card>
@@ -222,12 +205,7 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
             </CardHeader>
 
             <CardContent className="space-y-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled
-              >
+              <Button type="button" variant="outline" className="w-full" disabled>
                 <Eye className="mr-2 h-4 w-4" />
                 Preview Later
               </Button>
@@ -259,15 +237,14 @@ export function BlogForm({ mode, blog }: BlogFormProps) {
                 {isUploading
                   ? "Uploading..."
                   : isPending
-                    ? "Publishing..."
-                    : "Publish"}
+                  ? "Publishing..."
+                  : "Publish"}
               </Button>
 
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  Complete title, description, content, and optionally upload a
-                  thumbnail.
+                  Complete title, description, content, and optionally upload a thumbnail.
                 </p>
               </div>
             </CardContent>

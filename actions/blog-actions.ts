@@ -1,3 +1,4 @@
+// @/actions/blog-actions.tsx
 "use server";
 
 import { redirect } from "next/navigation";
@@ -21,7 +22,13 @@ export type CreateBlogState = {
 const createBlogSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  content: z.string().min(20, "Content must be at least 20 characters"),
+  content: z.string().refine(
+    (html) => {
+      const text = html.replace(/<[^>]*>/g, "").trim();
+      return text.length >= 20;
+    },
+    { message: "Content must be at least 20 characters" }
+  ),
   thumbnail: z
     .string()
     .trim()
@@ -38,19 +45,10 @@ export async function createBlogAction(
   const session = await auth();
 
   if (!session?.user) {
-    return {
-      errors: {
-        _form: ["You must be logged in to create a blog."],
-      },
-    };
+    return { errors: { _form: ["You must be logged in to create a blog."] } };
   }
-
   if (session.user.role !== "PUBLISHER") {
-    return {
-      errors: {
-        _form: ["Only publishers can create blogs."],
-      },
-    };
+    return { errors: { _form: ["Only publishers can create blogs."] } };
   }
 
   const parsed = createBlogSchema.safeParse({
@@ -62,55 +60,42 @@ export async function createBlogAction(
   });
 
   if (!parsed.success) {
-    return {
-      errors: parsed.error.flatten().fieldErrors,
-    };
+    return { errors: parsed.error.flatten().fieldErrors };
   }
 
   const baseSlug = generateSlug(parsed.data.title);
   const slug = `${baseSlug}-${Date.now()}`;
 
-  await db.blog.create({
-    data: {
-      title: parsed.data.title,
-      slug,
-      description: parsed.data.description,
-      content: parsed.data.content,
-      thumbnail: parsed.data.thumbnail ?? null,
-      status: parsed.data.status,
-      publishedAt: parsed.data.status === "PUBLISHED" ? new Date() : null,
-      authorId: session.user.id,
-    },
-  });
+  try {
+    await db.blog.create({
+      data: {
+        title: parsed.data.title,
+        slug,
+        description: parsed.data.description,
+        content: parsed.data.content,
+        thumbnail: parsed.data.thumbnail ?? null,
+        status: parsed.data.status,
+        publishedAt: parsed.data.status === "PUBLISHED" ? new Date() : null,
+        authorId: session.user.id,
+      },
+    });
+  } catch (error) {
+    console.error("CREATE BLOG DATABASE ERROR:", error);
+    return { errors: { _form: ["Database error. Please try again."] } };
+  }
 
   redirect("/dashboard");
 }
 
 export async function deleteBlogAction(blogId: string) {
   const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
+  if (!session?.user) throw new Error("Unauthorized");
 
-  const blog = await db.blog.findUnique({
-    where: {
-      id: blogId,
-    },
-  });
+  const blog = await db.blog.findUnique({ where: { id: blogId } });
+  if (!blog) throw new Error("Blog not found");
+  if (blog.authorId !== session.user.id) throw new Error("You cannot delete this blog");
 
-  if (!blog) {
-    throw new Error("Blog not found");
-  }
-
-  if (blog.authorId !== session.user.id) {
-    throw new Error("You cannot delete this blog");
-  }
-
-  await db.blog.delete({
-    where: {
-      id: blogId,
-    },
-  });
+  await db.blog.delete({ where: { id: blogId } });
 }
 
 export async function updateBlogAction(
@@ -119,33 +104,12 @@ export async function updateBlogAction(
   formData: FormData
 ): Promise<CreateBlogState> {
   const session = await auth();
+  if (!session?.user) return { errors: { _form: ["You must be logged in."] } };
 
-  if (!session?.user) {
-    return {
-      errors: {
-        _form: ["You must be logged in."],
-      },
-    };
-  }
-
-  const blog = await db.blog.findUnique({
-    where: { id: blogId },
-  });
-
-  if (!blog) {
-    return {
-      errors: {
-        _form: ["Blog not found."],
-      },
-    };
-  }
-
+  const blog = await db.blog.findUnique({ where: { id: blogId } });
+  if (!blog) return { errors: { _form: ["Blog not found."] } };
   if (blog.authorId !== session.user.id) {
-    return {
-      errors: {
-        _form: ["You are not allowed to edit this blog."],
-      },
-    };
+    return { errors: { _form: ["You are not allowed to edit this blog."] } };
   }
 
   const parsed = createBlogSchema.safeParse({
@@ -157,25 +121,28 @@ export async function updateBlogAction(
   });
 
   if (!parsed.success) {
-    return {
-      errors: parsed.error.flatten().fieldErrors,
-    };
+    return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  await db.blog.update({
-    where: { id: blogId },
-    data: {
-      title: parsed.data.title,
-      description: parsed.data.description,
-      content: parsed.data.content,
-      thumbnail: parsed.data.thumbnail ?? null,
-      status: parsed.data.status,
-      publishedAt:
-        parsed.data.status === "PUBLISHED"
-          ? blog.publishedAt ?? new Date()
-          : null,
-    },
-  });
+  try {
+    await db.blog.update({
+      where: { id: blogId },
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        content: parsed.data.content,
+        thumbnail: parsed.data.thumbnail ?? null,
+        status: parsed.data.status,
+        publishedAt:
+          parsed.data.status === "PUBLISHED"
+            ? blog.publishedAt ?? new Date()
+            : null,
+      },
+    });
+  } catch (error) {
+    console.error("UPDATE BLOG DATABASE ERROR:", error);
+    return { errors: { _form: ["Database error. Please try again."] } };
+  }
 
   redirect("/dashboard");
 }

@@ -128,3 +128,63 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .prose {
+    @apply text-foreground selection:bg-primary/20;
+  }
+  .prose h1 {
+    @apply text-3xl font-extrabold tracking-tight mb-4 mt-6 lg:text-4xl;
+  }
+  .prose h2 {
+    @apply text-2xl font-semibold tracking-tight mb-3 mt-5 border-b pb-1;
+  }
+  .prose p {
+    @apply leading-7 mb-4 text-muted-foreground;
+  }
+  
+  /* --- SYSTEM CODE WRAPPER SYSTEM --- */
+  .prose pre {
+    @apply bg-zinc-950 text-zinc-50 rounded-lg p-4 my-4 font-mono text-sm overflow-x-auto shadow-md border border-zinc-800/50;
+  }
+  .prose code {
+    @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary font-medium;
+  }
+  .prose pre code {
+    @apply bg-transparent p-0 text-inherit text-sm leading-6 block;
+  }
+}
+
+/* CRITICAL FIX FOR TAILWIND v4: 
+  Keep dynamic code syntax highlight rules outside `@layer components`. 
+  This forces the build utility to preserve these definitions for your runtime injected HTML.
+*/
+.prose .hljs-keyword, 
+.prose .hljs-selector-tag { 
+  color: #f472b6 !important; /* text-pink-400 */
+  font-weight: 600;
+}
+.prose .hljs-string { 
+  color: #34d399 !important; /* text-emerald-400 */
+}
+.prose .hljs-comment { 
+  color: #71717a !important; /* text-zinc-500 */
+  font-style: italic;
+}
+.prose .hljs-number, 
+.prose .hljs-literal { 
+  color: #fbbf24 !important; /* text-amber-400 */
+}
+.prose .hljs-title, 
+.prose .hljs-section, 
+.prose .hljs-function { 
+  color: #38bdf8 !important; /* text-sky-400 */
+  font-weight: 500;
+}
+.prose .hljs-type,
+.prose .hljs-built_in {
+  color: #818cf8 !important; /* text-indigo-400 */
+}
+.prose .hljs-params {
+  color: #e4e4e7 !important; /* text-zinc-200 */
+}
