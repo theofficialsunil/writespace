@@ -162,15 +162,21 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   {blogs.length} published blogs
                 </span>
 
-                <span className="flex items-center gap-1">
+                <Link
+                  href={`/profile/${user.username}/followers`}
+                  className="flex items-center gap-1 transition hover:text-primary"
+                >
                   <Users className="h-4 w-4" />
                   {user.followers.length} followers
-                </span>
+                </Link>
 
-                <span className="flex items-center gap-1">
+                <Link
+                  href={`/profile/${user.username}/following`}
+                  className="flex items-center gap-1 transition hover:text-primary"
+                >
                   <UserRound className="h-4 w-4" />
                   {user.following.length} following
-                </span>
+                </Link>
 
                 <span className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
