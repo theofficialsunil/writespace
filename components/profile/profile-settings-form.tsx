@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { ChangeEvent, useActionState, useState } from "react";
-import { Upload } from "lucide-react";
+import { ChangeEvent, useActionState, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { BookOpen, PenTool, Upload, User } from "lucide-react";
 
 import {
   updateProfileAction,
@@ -13,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
 interface ProfileSettingsFormProps {
@@ -21,20 +23,39 @@ interface ProfileSettingsFormProps {
     username: string | null;
     bio: string | null;
     image: string | null;
+    role: "READER" | "PUBLISHER";
   };
 }
 
 const initialState: ProfileState = {};
 
 export function ProfileSettingsForm({ user }: ProfileSettingsFormProps) {
+  const { update } = useSession();
+
   const [imageUrl, setImageUrl] = useState(user.image ?? "");
-  const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const [state, formAction, isPending] = useActionState(
     updateProfileAction,
     initialState
   );
+
+  const initials = user.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
+  useEffect(() => {
+    if (!state.success || !state.role) return;
+
+    update({
+      user: {
+        role: state.role,
+      },
+    });
+  }, [state.success, state.role, update]);
 
   async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -64,110 +85,135 @@ export function ProfileSettingsForm({ user }: ProfileSettingsFormProps) {
     }
   }
 
-  const initials = user.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-
   return (
-    <form action={formAction} className="space-y-5">
-      <input type="hidden" name="image" value={imageUrl} />
+    <form action={formAction} className="space-y-6">
+      <input type="hidden" name="image" value={imageUrl} readOnly />
 
-      {state.error && (
-        <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Avatar className="h-20 w-20 overflow-hidden rounded-full">
+          {imageUrl ? (
+            <div className="relative h-full w-full overflow-hidden rounded-full">
+              <Image
+                src={imageUrl}
+                alt={user.name}
+                fill
+                sizes="80px"
+                className="rounded-full object-cover"
+              />
+            </div>
+          ) : (
+            <AvatarFallback className="rounded-full text-2xl">
+              {initials || <User className="h-8 w-8" />}
+            </AvatarFallback>
+          )}
+        </Avatar>
 
-      {state.success && (
-        <p className="rounded-md bg-green-50 p-3 text-sm text-green-700">
-          {state.success}
-        </p>
-      )}
+        <div className="space-y-2">
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={isUploading}
+          />
 
-      <div className="space-y-3">
-        <Label>Profile Image</Label>
+          <p className="text-xs text-muted-foreground">
+            JPG, PNG or WEBP. Max size 2MB.
+          </p>
 
-        <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20">
-            {imageUrl ? (
-              <div className="relative h-full w-full">
-                <Image
-                  src={imageUrl}
-                  alt={user.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <AvatarFallback className="text-xl">{initials}</AvatarFallback>
-            )}
-          </Avatar>
+          {uploadError && (
+            <p className="text-sm text-destructive">{uploadError}</p>
+          )}
 
-          <div className="space-y-2">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={isUploading}
-            />
-
-            <p className="text-xs text-muted-foreground">
-              JPG, PNG or WEBP. Max size 2MB.
-            </p>
-          </div>
+          {imageUrl && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setImageUrl("")}
+            >
+              Remove Image
+            </Button>
+          )}
         </div>
-
-        {uploadError && (
-          <p className="text-sm text-destructive">{uploadError}</p>
-        )}
-
-        {imageUrl && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setImageUrl("")}
-          >
-            Remove Image
-          </Button>
-        )}
       </div>
 
       <div className="space-y-2">
-        <Label>Name</Label>
-        <Input name="name" defaultValue={user.name} />
+        <Label htmlFor="name">Full Name</Label>
+        <Input id="name" name="name" defaultValue={user.name} required />
       </div>
 
       <div className="space-y-2">
-        <Label>Username</Label>
-        <Input value={user.username ?? ""} disabled />
-        <p className="text-sm text-muted-foreground">
-          Username editing will be added later.
+        <Label htmlFor="username">Username</Label>
+        <Input
+          id="username"
+          value={user.username ?? ""}
+          disabled
+          className="bg-muted"
+        />
+        <p className="text-xs text-muted-foreground">
+          Username cannot be changed currently.
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label>Bio</Label>
+        <Label htmlFor="bio">Bio</Label>
         <Textarea
+          id="bio"
           name="bio"
           defaultValue={user.bio ?? ""}
-          placeholder="Write a short bio..."
+          placeholder="Tell readers about yourself..."
           className="min-h-28"
         />
+        <p className="text-xs text-muted-foreground">Maximum 200 characters.</p>
       </div>
 
-      <Button type="submit" disabled={isPending || isUploading}>
-        {isUploading ? (
-          <>
-            <Upload className="mr-2 h-4 w-4" />
-            Uploading...
-          </>
-        ) : isPending ? (
-          "Saving..."
-        ) : (
-          "Save Changes"
-        )}
+      <div className="space-y-3">
+        <Label>I want to use WriteSpace as:</Label>
+
+        <RadioGroup defaultValue={user.role} name="role">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="READER" id="settings-reader" />
+            <Label
+              htmlFor="settings-reader"
+              className="flex cursor-pointer items-center gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              Reader
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="PUBLISHER" id="settings-publisher" />
+            <Label
+              htmlFor="settings-publisher"
+              className="flex cursor-pointer items-center gap-2"
+            >
+              <PenTool className="h-4 w-4" />
+              Publisher
+            </Label>
+          </div>
+        </RadioGroup>
+
+        <p className="text-xs text-muted-foreground">
+          Readers can browse, like, comment, bookmark, and follow. Publishers
+          can also create and manage blogs.
+        </p>
+      </div>
+
+      {state.error && <p className="text-sm text-destructive">{state.error}</p>}
+
+      {state.success && (
+        <p className="rounded-md bg-green-50 p-2 text-sm text-green-700">
+          Profile updated successfully.
+        </p>
+      )}
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isPending || isUploading}
+      >
+        {isPending ? "Saving..." : isUploading ? "Uploading..." : "Save Changes"}
       </Button>
     </form>
   );

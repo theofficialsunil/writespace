@@ -7,6 +7,7 @@ import { Blog } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BlogContent } from "@/components/blogs/blog-content";
+import { ShareButton } from "@/components/blogs/share-button";
 
 interface BlogViewProps {
   blog: Blog;
@@ -87,10 +88,7 @@ export function BlogView({ blog, actions }: BlogViewProps) {
 
           <div className="flex items-center gap-2">
             {actions}
-            <Button variant="outline" size="sm">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
+            <ShareButton title={blog.title} slug={blog.slug} />
           </div>
         </div>
 

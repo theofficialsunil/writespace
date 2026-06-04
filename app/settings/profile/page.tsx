@@ -26,6 +26,7 @@ export default async function ProfileSettingsPage() {
       username: true,
       bio: true,
       image: true,
+      role: true,
     },
   });
 
@@ -41,7 +42,15 @@ export default async function ProfileSettingsPage() {
         </CardHeader>
 
         <CardContent>
-          <ProfileSettingsForm user={user} />
+          <ProfileSettingsForm
+            user={{
+              name: user.name,
+              username: user.username,
+              bio: user.bio,
+              image: user.image,
+              role: user.role === "ADMIN" ? "PUBLISHER" : user.role,
+            }}
+          />
         </CardContent>
       </Card>
     </main>

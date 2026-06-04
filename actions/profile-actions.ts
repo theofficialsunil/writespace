@@ -8,13 +8,19 @@ import { db } from "@/lib/db";
 
 export type ProfileState = {
   error?: string;
-  success?: string;
+  success?: boolean;
+  role?: "READER" | "PUBLISHER";
 };
 
 const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  bio: z.string().max(200, "Bio must be at most 200 characters").optional(),
-  image: z.string().url("Invalid image URL").optional().or(z.literal("")),
+  name: z.string().trim().min(2, "Name must be at least 2 characters"),
+  bio: z
+    .string()
+    .trim()
+    .max(200, "Bio must be at most 200 characters")
+    .optional(),
+  image: z.string().trim().optional(),
+  role: z.enum(["READER", "PUBLISHER"]),
 });
 
 export async function updateProfileAction(
@@ -33,19 +39,23 @@ export async function updateProfileAction(
     name: formData.get("name"),
     bio: formData.get("bio"),
     image: formData.get("image"),
+    role: formData.get("role"),
   });
 
   if (!parsed.success) {
+    const errors = parsed.error.flatten().fieldErrors;
+
     return {
       error:
-        parsed.error.flatten().fieldErrors.name?.[0] ||
-        parsed.error.flatten().fieldErrors.bio?.[0] ||
-        parsed.error.flatten().fieldErrors.image?.[0] ||
+        errors.name?.[0] ||
+        errors.bio?.[0] ||
+        errors.image?.[0] ||
+        errors.role?.[0] ||
         "Invalid profile data",
     };
   }
 
-  const user = await db.user.update({
+  const updatedUser = await db.user.update({
     where: {
       id: session.user.id,
     },
@@ -53,19 +63,22 @@ export async function updateProfileAction(
       name: parsed.data.name,
       bio: parsed.data.bio || null,
       image: parsed.data.image || null,
+      role: parsed.data.role,
     },
     select: {
       username: true,
+      role: true,
     },
   });
 
-  if (user.username) {
-    revalidatePath(`/profile/${user.username}`);
-  }
-
   revalidatePath("/settings/profile");
 
+  if (updatedUser.username) {
+    revalidatePath(`/profile/${updatedUser.username}`);
+  }
+
   return {
-    success: "Profile updated successfully.",
+    success: true,
+    role: updatedUser.role as "READER" | "PUBLISHER",
   };
 }
