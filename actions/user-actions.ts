@@ -9,9 +9,10 @@ export type UsernameState = {
   error?: string;
   success?: boolean;
   username?: string;
+  role?: "READER" | "PUBLISHER";
 };
 
-const usernameSchema = z.object({
+const onboardingSchema = z.object({
   username: z
     .string()
     .trim()
@@ -21,6 +22,7 @@ const usernameSchema = z.object({
       /^[a-z0-9_]+$/,
       "Only lowercase letters, numbers, and underscores"
     ),
+  role: z.enum(["READER", "PUBLISHER"]),
 });
 
 export async function setUsernameAction(
@@ -30,18 +32,22 @@ export async function setUsernameAction(
   const session = await auth();
 
   if (!session?.user) {
-    return {
-      error: "You must be logged in.",
-    };
+    return { error: "You must be logged in." };
   }
 
-  const parsed = usernameSchema.safeParse({
+  const parsed = onboardingSchema.safeParse({
     username: formData.get("username"),
+    role: formData.get("role"),
   });
 
   if (!parsed.success) {
+    const errors = parsed.error.flatten().fieldErrors;
+
     return {
-      error: parsed.error.flatten().fieldErrors.username?.[0],
+      error:
+        errors.username?.[0] ||
+        errors.role?.[0] ||
+        "Invalid onboarding data",
     };
   }
 
@@ -52,9 +58,7 @@ export async function setUsernameAction(
   });
 
   if (existingUser && existingUser.id !== session.user.id) {
-    return {
-      error: "Username already taken",
-    };
+    return { error: "Username already taken" };
   }
 
   await db.user.update({
@@ -63,11 +67,13 @@ export async function setUsernameAction(
     },
     data: {
       username: parsed.data.username,
+      role: parsed.data.role,
     },
   });
 
   return {
     success: true,
     username: parsed.data.username,
+    role: parsed.data.role,
   };
 }

@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 
 import { db } from "@/lib/db";
@@ -10,6 +11,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   providers: [
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+    }),
+
     Credentials({
       name: "Credentials",
 
@@ -28,25 +34,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
 
-        if (!email || !password) {
-          return null;
-        }
+        if (!email || !password) return null;
 
         const user = await db.user.findUnique({
-          where: {
-            email,
-          },
+          where: { email },
         });
 
-        if (!user || !user.password) {
-          return null;
-        }
+        if (!user || !user.password) return null;
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
-
-        if (!isPasswordValid) {
-          return null;
-        }
+        if (!isPasswordValid) return null;
 
         return {
           id: user.id,
@@ -61,15 +58,60 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.username = user.username;
+    async signIn({ user, account }) {
+      if (account?.provider !== "google") {
+        return true;
       }
 
-      if (trigger === "update" && session?.user?.username) {
-        token.username = session.user.username;
+      if (!user.email) {
+        return false;
+      }
+
+      const existingUser = await db.user.findUnique({
+        where: {
+          email: user.email,
+        },
+      });
+
+      if (!existingUser) {
+        await db.user.create({
+          data: {
+            name: user.name ?? "Google User",
+            email: user.email,
+            image: user.image,
+            password: "",
+            role: "READER",
+          },
+        });
+      }
+
+      return true;
+    },
+
+    async jwt({ token, user, trigger, session }) {
+      if (user?.email) {
+        token.email = user.email;
+      }
+
+      if (trigger === "update" && session?.user) {
+        token.username = session.user.username ?? token.username;
+        token.role = session.user.role ?? token.role;
+      }
+
+      if (token.email) {
+        const dbUser = await db.user.findUnique({
+          where: {
+            email: token.email,
+          },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.username = dbUser.username;
+          token.name = dbUser.name;
+          token.picture = dbUser.image;
+        }
       }
 
       return token;

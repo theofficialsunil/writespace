@@ -126,21 +126,23 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       <Card className="mb-8">
         <CardContent className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <Avatar className="h-20 w-20">
-              {user.image ? (
-                <div className="relative h-full w-full">
-                  <Image
-                    src={user.image}
-                    alt={user.name}
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-              )}
-            </Avatar>
+            <Avatar className="h-20 w-20 overflow-hidden rounded-full">
+            {user.image ? (
+              <div className="relative h-full w-full overflow-hidden rounded-full">
+                <Image
+                  src={user.image}
+                  alt={user.name}
+                  fill
+                  sizes="80px"
+                  className="rounded-full object-cover"
+                />
+              </div>
+            ) : (
+              <AvatarFallback className="rounded-full text-2xl">
+                {initials}
+              </AvatarFallback>
+            )}
+          </Avatar>
 
             <div>
               <div className="flex flex-wrap items-center gap-2">
